@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useSignup } from '#/hooks/useAuth'
 import { getToken } from '#/lib/auth-storage'
 import { ApiError } from '#/lib/api-client'
+import GoogleSignInButton from '#/components/GoogleSignInButton'
 
 export const Route = createFileRoute('/signup')({
   beforeLoad: () => {
@@ -62,6 +63,15 @@ function SignupPage() {
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-6">
           Enter your information to create an account
         </p>
+
+        <div className="mb-6">
+          <GoogleSignInButton />
+          <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-neutral-400">
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+            <span>or</span>
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="grid gap-4">
           <Field

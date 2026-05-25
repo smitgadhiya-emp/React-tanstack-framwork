@@ -25,8 +25,6 @@ export default function AuthHeaderUser() {
     )
   }
 
-  const initial = user.email.charAt(0).toUpperCase()
-
   const handleLogout = () => {
     logout()
     navigate({ to: '/login' })
