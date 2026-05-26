@@ -65,7 +65,7 @@ function SignupPage() {
         </p>
 
         <div className="mb-6">
-          <GoogleSignInButton />
+          <GoogleSignInButton redirectTo="/dashboard" />
           <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-neutral-400">
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
             <span>or</span>

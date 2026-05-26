@@ -5,11 +5,17 @@ import { getToken } from '#/lib/auth-storage'
 import { ApiError } from '#/lib/api-client'
 import GoogleSignInButton from '#/components/GoogleSignInButton'
 
-type Search = { redirect?: string }
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  oauth_incomplete: 'Google sign-in did not return the required credentials.',
+  oauth_failed: 'Something went wrong while completing Google sign-in.',
+}
+
+type Search = { redirect?: string; error?: string }
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>): Search => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
+    error: typeof search.error === 'string' ? search.error : undefined,
   }),
   beforeLoad: ({ search }) => {
     if (typeof window !== 'undefined' && getToken()) {
@@ -21,10 +27,11 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate()
-  const { redirect: redirectTo } = Route.useSearch()
+  const { redirect: redirectTo, error: oauthError } = Route.useSearch()
   const login = useLogin()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const postAuthPath = redirectTo || '/dashboard'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,16 +39,21 @@ function LoginPage() {
       { email, password },
       {
         onSuccess: () => {
-          navigate({ to: (redirectTo as any) || '/dashboard' })
+          navigate({ to: postAuthPath as '/dashboard' })
         },
       },
     )
   }
 
+  const oauthErrorMessage = oauthError
+    ? OAUTH_ERROR_MESSAGES[oauthError] ?? 'Google sign-in failed.'
+    : undefined
+
   const errorMessage =
-    login.error instanceof ApiError
+    oauthErrorMessage ??
+    (login.error instanceof ApiError
       ? login.error.details || login.error.message
-      : login.error?.message
+      : login.error?.message)
 
   return (
     <div className="flex justify-center py-10 px-4">
@@ -54,7 +66,7 @@ function LoginPage() {
         </p>
 
         <div className="mb-6">
-          <GoogleSignInButton />
+          <GoogleSignInButton redirectTo={postAuthPath} />
           <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-neutral-400">
             <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
             <span>or</span>

@@ -9,6 +9,14 @@ import {
   subscribeAuth,
   type StoredUser,
 } from '#/lib/auth-storage'
+import {
+  consumeOAuthRedirect,
+  isOAuthCallbackSuccess,
+  startGoogleOAuth,
+  type OAuthCallbackParams,
+} from '#/lib/oauth'
+
+export { startGoogleOAuth }
 
 export type LoginPayload = {
   email: string
@@ -86,6 +94,19 @@ export function useLogout() {
     clearAuth()
     queryClient.clear()
   }
+}
+
+/** Complete OAuth callback: store JWT and return the saved redirect path. */
+export function completeOAuthCallback(params: OAuthCallbackParams): string {
+  if (!isOAuthCallbackSuccess(params)) {
+    throw new Error('Invalid OAuth callback parameters')
+  }
+  setAuth(params.token, {
+    userId: params.userId,
+    email: params.email,
+    role: params.role ?? 'user',
+  })
+  return consumeOAuthRedirect()
 }
 
 type AuthState = {

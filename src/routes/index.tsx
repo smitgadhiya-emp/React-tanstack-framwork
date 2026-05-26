@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import GoogleSignInButton from '#/components/GoogleSignInButton'
 import { useAuth } from '#/hooks/useAuth'
 
 export const Route = createFileRoute('/')({ component: HomePage })
@@ -7,7 +8,7 @@ const FEATURES = [
   {
     title: 'Secure accounts',
     description:
-      'Sign up and sign in against a Go API with JWT-backed sessions stored in the browser.',
+      'Email/password or Google OAuth — both issue JWTs from the Go API and persist in the browser.',
   },
   {
     title: 'Protected workspace',
@@ -30,7 +31,7 @@ const STEPS = [
   {
     step: '01',
     title: 'Create an account',
-    body: 'Register with your email, profile details, and role via the signup form.',
+    body: 'Sign up with email or continue with Google — one click redirects through OAuth and back.',
   },
   {
     step: '02',
@@ -83,6 +84,9 @@ function HomePage() {
               >
                 Sign in
               </Link>
+              <div className="w-full sm:w-auto sm:min-w-[220px]">
+                <GoogleSignInButton redirectTo="/dashboard" />
+              </div>
             </>
           )}
           <Link

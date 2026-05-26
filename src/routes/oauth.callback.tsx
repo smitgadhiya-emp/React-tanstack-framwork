@@ -1,41 +1,61 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   createFileRoute,
   Link,
+  redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { setAuth } from '#/lib/auth-storage'
-
-type Search = {
-  token?: string
-  userId?: string
-  email?: string
-  role?: string
-  error?: string
-}
+import { useQueryClient } from '@tanstack/react-query'
+import { completeOAuthCallback } from '#/hooks/useAuth'
+import { getToken } from '#/lib/auth-storage'
+import {
+  isOAuthCallbackSuccess,
+  parseOAuthCallbackParams,
+} from '#/lib/oauth'
 
 export const Route = createFileRoute('/oauth/callback')({
-  validateSearch: (raw: Record<string, unknown>): Search => ({
-    token: typeof raw.token === 'string' ? raw.token : undefined,
-    userId: typeof raw.userId === 'string' ? raw.userId : undefined,
-    email: typeof raw.email === 'string' ? raw.email : undefined,
-    role: typeof raw.role === 'string' ? raw.role : undefined,
-    error: typeof raw.error === 'string' ? raw.error : undefined,
-  }),
+  validateSearch: parseOAuthCallbackParams,
+  beforeLoad: ({ search }) => {
+    if (typeof window !== 'undefined' && getToken() && !search.error) {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
   component: OAuthCallbackPage,
 })
 
 function OAuthCallbackPage() {
-  const { token, userId, email, role, error } = Route.useSearch()
+  const params = Route.useSearch()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const handled = useRef(false)
 
   useEffect(() => {
-    if (error || !token || !userId || !email) return
-    setAuth(token, { userId, email, role: role ?? 'user' })
-    navigate({ to: '/dashboard', replace: true })
-  }, [token, userId, email, role, error, navigate])
+    if (handled.current || params.error) return
 
-  if (error) {
+    if (!isOAuthCallbackSuccess(params)) {
+      navigate({
+        to: '/login',
+        search: { error: 'oauth_incomplete' },
+        replace: true,
+      })
+      return
+    }
+
+    handled.current = true
+    try {
+      const redirectTo = completeOAuthCallback(params)
+      queryClient.invalidateQueries()
+      navigate({ to: redirectTo as '/dashboard', replace: true })
+    } catch {
+      navigate({
+        to: '/login',
+        search: { error: 'oauth_failed' },
+        replace: true,
+      })
+    }
+  }, [params, navigate, queryClient])
+
+  if (params.error) {
     return (
       <div className="flex justify-center py-10 px-4">
         <div className="w-full max-w-md p-6">
@@ -43,7 +63,7 @@ function OAuthCallbackPage() {
             Sign-in failed
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-6">
-            {error}
+            {decodeURIComponent(params.error)}
           </p>
           <Link
             to="/login"
@@ -61,7 +81,7 @@ function OAuthCallbackPage() {
       <div className="flex items-center gap-3">
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-neutral-50" />
         <span className="text-sm text-neutral-500 dark:text-neutral-400">
-          Signing you in…
+          Signing you in with Google…
         </span>
       </div>
     </div>

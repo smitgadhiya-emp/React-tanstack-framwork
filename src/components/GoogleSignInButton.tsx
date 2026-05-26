@@ -1,17 +1,31 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+import {
+  getGoogleOAuthUrl,
+  saveOAuthRedirect,
+} from '#/lib/oauth'
 
-// Use a full-page navigation (not fetch) — OAuth is a redirect dance through
-// google.com and back; fetch would just see Google's HTML.
-export default function GoogleSignInButton() {
+type GoogleSignInButtonProps = {
+  redirectTo?: string
+  className?: string
+}
+
+const defaultClassName =
+  'inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-900 no-underline transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800'
+
+export default function GoogleSignInButton({
+  redirectTo = '/dashboard',
+  className = defaultClassName,
+}: GoogleSignInButtonProps) {
+  const oauthUrl = getGoogleOAuthUrl()
+
   const handleClick = () => {
-    window.location.href = `${API_URL}/api/v1/oauth/google`
+    saveOAuthRedirect(redirectTo)
   }
 
   return (
-    <button
-      type="button"
+    <a
+      href={oauthUrl}
       onClick={handleClick}
-      className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800"
+      className={className}
     >
       <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
         <path
@@ -32,6 +46,6 @@ export default function GoogleSignInButton() {
         />
       </svg>
       Continue with Google
-    </button>
+    </a>
   )
 }

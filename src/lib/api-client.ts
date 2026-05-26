@@ -1,6 +1,5 @@
+import { apiUrl } from '#/lib/api-base'
 import { getToken } from './auth-storage'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
 export class ApiError extends Error {
   status: number
@@ -26,7 +25,7 @@ export async function apiRequest<T>(
   headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers })
+  const res = await fetch(apiUrl(path), { ...init, headers })
   const body = (await res.json().catch(() => null)) as
     | GoSuccessResponse<T>
     | GoErrorResponse
